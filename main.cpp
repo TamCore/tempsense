@@ -5,7 +5,7 @@
 
 int main(int argc, char **argv) {
     int i, num;
-    float temp;
+    float temp, offset = 0;
     unsigned char buf[64];
     char *pwr;
 
@@ -13,6 +13,10 @@ int main(int argc, char **argv) {
     if (!handle) {
         fprintf(stderr, "No temperature sensor found!\n");
         return 1;
+    }
+
+    if (argc == 2) {
+        offset = atof(argv[1]);
     }
     
     while (true) {
@@ -26,13 +30,14 @@ int main(int argc, char **argv) {
             else { pwr = "Parasite"; }
 
             temp = *(short *)&buf[4];
+            temp = (float)temp/10.0f-(float)offset;
 
             time_t now;
             time(&now);
             tm loctm;
             localtime_r(&now, &loctm);
 
-            fprintf(stdout, "[%02d:%02d:%02d] Sensor #%d of %d: \t %.1f\u2103 \t Power: %-10s \t ID: ", loctm.tm_hour, loctm.tm_min, loctm.tm_sec, buf[1], buf[0], (float)temp/10.0f, pwr);
+            fprintf(stdout, "[%02d:%02d:%02d] Sensor #%d of %d: \t %.1f\u2103 \t Power: %-10s \t ID: ", loctm.tm_hour, loctm.tm_min, loctm.tm_sec, buf[1], buf[0], temp, pwr);
             for (i = 0x08; i < 0x10; i++) {
                 fprintf(stdout, "%02X ", (unsigned char)buf[i]);
             }
