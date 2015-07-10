@@ -15,6 +15,8 @@ sha256sums=('SKIP')
 
 build() {
   cd "$srcdir/${pkgname%-git}"
+  git submodule init
+  git submodule update
   make
 }
 
