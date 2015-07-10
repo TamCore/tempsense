@@ -1,13 +1,21 @@
+#pragma GCC diagnostic ignored "-Wwrite-strings"
+
 #include <hidapi.h>
 #include <cstdlib>
-#include <cstdio>
 #include <ctime>
+#include "cmdline/cmdline.h"
 
 int main(int argc, char **argv) {
-    int i, num;
-    float temp, offset = 0;
+    int i, num, mon_cnt = 0;
+    float temp, mon_temp, offset = 0;
     unsigned char buf[64];
     char *pwr;
+    bool done = false;
+
+    cmdline::parser a;
+    a.add<int>("offset", 'o', "offset from measured temperature", false, 0);
+    a.add("monitoring", 'm', "monitoring mode", false, false);
+    a.parse_check(argc, argv);
 
     hid_device *handle = hid_open(0x16c0, 0x0480, nullptr);
     if (!handle) {
@@ -15,9 +23,7 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    if (argc == 2) {
-        offset = atof(argv[1]);
-    }
+    offset = a.get<int>("offset");
     
     while (true) {
         num = hid_read(handle, buf, 64);
@@ -31,6 +37,20 @@ int main(int argc, char **argv) {
 
             temp = *(short *)&buf[4];
             temp = (float)temp/10.0f-(float)offset;
+
+            if (a.exist("monitoring")) {
+                if (buf[0] > 1 && mon_cnt < buf[0]) {
+                    mon_temp = (mon_temp + temp);
+                    mon_cnt = (mon_cnt + 1);
+                } else {
+                    done = true;
+                }
+                if (done) {
+                    fprintf(stdout, "%.1f\n", (mon_temp / mon_cnt));
+                    return 0;
+                }
+                continue;
+            }
 
             time_t now;
             time(&now);
@@ -46,4 +66,3 @@ int main(int argc, char **argv) {
     }
     return 0;
 }
-
