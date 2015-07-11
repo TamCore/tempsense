@@ -1,15 +1,14 @@
-#pragma GCC diagnostic ignored "-Wwrite-strings"
-
 #include <hidapi.h>
 #include <cstdlib>
 #include <ctime>
 #include "cmdline/cmdline.h"
+#include <string>
 
 int main(int argc, char **argv) {
     int i, num, mon_cnt = 0;
     float temp, mon_temp, offset = 0;
     unsigned char buf[64];
-    char *pwr;
+    std::string pwr;
     bool done = false;
 
     cmdline::parser a;
@@ -57,7 +56,7 @@ int main(int argc, char **argv) {
             tm loctm;
             localtime_r(&now, &loctm);
 
-            fprintf(stdout, "[%02d:%02d:%02d] Sensor #%d of %d: \t %.1f\u2103 \t Power: %-10s \t ID: ", loctm.tm_hour, loctm.tm_min, loctm.tm_sec, buf[1], buf[0], temp, pwr);
+            fprintf(stdout, "[%02d:%02d:%02d] Sensor #%d of %d: \t %.1f\u2103 \t Power: %-10s \t ID: ", loctm.tm_hour, loctm.tm_min, loctm.tm_sec, buf[1], buf[0], temp, pwr.c_str());
             for (i = 0x08; i < 0x10; i++) {
                 fprintf(stdout, "%02X ", (unsigned char)buf[i]);
             }
