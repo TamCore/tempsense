@@ -9,7 +9,6 @@ int main(int argc, char **argv) {
     float temp, mon_temp, offset = 0;
     unsigned char buf[64];
     std::string pwr;
-    bool done = false;
 
     cmdline::parser a;
     a.add<int>("offset", 'o', "offset from measured temperature", false, 0);
@@ -31,25 +30,22 @@ int main(int argc, char **argv) {
             return 4;
         }
         if (num == 64) {
-            if (buf[2]) { pwr = "Extern"; }
-            else { pwr = "Parasite"; }
-
             temp = *(short *)&buf[4];
             temp = (float)temp/10.0f-(float)offset;
 
             if (a.exist("monitoring")) {
-                if (buf[0] > 1 && mon_cnt < buf[0]) {
+                if (mon_cnt < buf[0]) {
                     mon_temp = (mon_temp + temp);
                     mon_cnt = (mon_cnt + 1);
+                    continue;
                 } else {
-                    done = true;
-                }
-                if (done) {
                     fprintf(stdout, "%.1f\n", (mon_temp / mon_cnt));
-                    return 0;
+                    break;
                 }
-                continue;
             }
+
+            if (buf[2]) { pwr = "Extern"; }
+            else { pwr = "Parasite"; }
 
             time_t now;
             time(&now);
